@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14100a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Gastos</title>
+<style>
+:root {
+  color-scheme: dark;
+  --fundo: #14100a;
+  --cartao: #211a10;
+  --cartao-2: #2b2215;
+  --borda: rgba(255, 255, 255, .07);
+  --cor: #b9781f;
+  --cor-claro: #f0b860;
+  --texto: #f6eedf;
+  --fraco: #b5a488;
+  --escuro: #57350a;
+  --sombra: 0 12px 28px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .35);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0;
+  background: radial-gradient(120% 60% at 50% 0%, #2e2110 0%, var(--fundo) 60%) fixed;
+  color: var(--texto);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: calc(14px + env(safe-area-inset-top)) 14px calc(96px + env(safe-area-inset-bottom));
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+main { max-width: 640px; margin: 0 auto; }
+[hidden] { display: none !important; }
+h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--cor-claro); margin: 22px 4px 10px; }
+
+.destaque {
+  background: linear-gradient(140deg, #c98a2b 0%, #8f5a14 55%, #57350a 100%);
+  border-radius: 24px;
+  padding: 22px;
+  box-shadow: 0 18px 36px rgba(120, 75, 15, .45), inset 0 1px 0 rgba(255, 255, 255, .16);
+  margin-bottom: 18px;
+}
+.destaque small { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; opacity: .8; font-weight: 600; }
+.destaque h1 { margin: 6px 0 4px; font-size: 28px; line-height: 1.15; letter-spacing: -.02em; }
+.destaque p { margin: 0; opacity: .85; }
+.navegar { display: flex; align-items: center; gap: 10px; }
+.navegar div { flex: 1; min-width: 0; }
+.seta { width: 42px; height: 42px; border: 0; border-radius: 14px; background: rgba(0, 0, 0, .22); font-size: 22px; flex: none; }
+.barra { height: 8px; border-radius: 999px; background: rgba(0, 0, 0, .28); margin-top: 16px; overflow: hidden; }
+.barra i { display: block; height: 100%; border-radius: 999px; background: var(--texto); }
+.card .barra { margin-top: 10px; background: rgba(255, 255, 255, .08); }
+.card .barra i { background: var(--cor-claro); }
+.card .barra i.estourou { background: #e5766a; }
+
+.card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: linear-gradient(180deg, var(--cartao-2), var(--cartao));
+  border: 1px solid var(--borda);
+  border-radius: 20px;
+  box-shadow: var(--sombra);
+  margin-bottom: 12px;
+  padding: 16px 18px;
+}
+.card.marcado { border-color: var(--cor-claro); }
+.topo { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.topo b { font-size: 17px; overflow-wrap: anywhere; min-width: 0; }
+.topo em { font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+.card span { color: var(--fraco); font-size: 13px; }
+.card .lado { color: var(--cor-claro); font-size: 13px; font-weight: 600; flex: none; }
+.selo { background: var(--cor); color: #fff !important; font-size: 11px !important; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-radius: 999px; padding: 3px 9px; flex: none; }
+.vazio { color: var(--fraco); text-align: center; padding: 22px 10px; margin: 0; }
+
+.principal {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  padding: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, #c98a2b, var(--cor));
+  box-shadow: 0 10px 22px rgba(120, 75, 15, .45), inset 0 1px 0 rgba(255, 255, 255, .18);
+  margin-bottom: 16px;
+}
+.principal:disabled { opacity: .4; }
+.botao { display: block; width: 100%; text-align: center; border: 1px solid var(--borda); background: var(--cartao-2); border-radius: 14px; padding: 13px; font-weight: 600; }
+.pequeno { width: auto; padding: 8px 16px; margin: 12px 0 0; font-size: 14px; border-radius: 12px; }
+.periodo { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(0, 0, 0, .25); margin-top: 16px; }
+.periodo button { flex: 1; border: 0; background: none; border-radius: 10px; padding: 8px; font-weight: 600; font-size: 14px; opacity: .75; }
+.periodo button.ativo { background: var(--texto); color: var(--escuro); opacity: 1; }
+.grafico { padding: 14px 10px 8px; }
+.grafico svg { display: block; width: 100%; height: auto; }
+
+nav {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  max-width: 612px;
+  margin: 0 auto;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: color-mix(in srgb, var(--cartao) 92%, transparent);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--borda);
+  border-radius: 22px;
+  box-shadow: var(--sombra);
+}
+nav button { flex: 1; border: 0; background: none; border-radius: 16px; padding: 9px 0 8px; color: var(--fraco); font-size: 12px; font-weight: 600; }
+nav svg { display: block; width: 22px; height: 22px; margin: 0 auto 3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+nav button.ativo { background: var(--cor); color: #fff; box-shadow: 0 6px 14px rgba(120, 75, 15, .45); }
+
+dialog {
+  width: min(520px, 94vw);
+  max-height: 92vh;
+  border: 1px solid var(--borda);
+  border-radius: 24px;
+  background: var(--cartao);
+  color: var(--texto);
+  padding: 20px;
+  box-shadow: var(--sombra);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .7); backdrop-filter: blur(3px); }
+dialog h3 { margin: 0 0 6px; font-size: 20px; }
+.campo { display: block; color: var(--fraco); font-size: 14px; margin: 12px 0 4px; }
+input[type=text], input[type=date], select {
+  width: 100%;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  padding: 13px;
+}
+input:focus, select:focus { outline: 2px solid var(--cor-claro); outline-offset: 1px; }
+.linha { display: flex; gap: 10px; margin-top: 16px; }
+.linha > * { flex: 1; margin-bottom: 0; }
+.excluir { color: #ef9a8f; flex: 0 0 auto; width: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips label { position: relative; }
+.chips input { position: absolute; opacity: 0; }
+.chips span { display: block; border: 1px solid var(--borda); border-radius: 999px; padding: 8px 14px; }
+.chips input:checked + span { background: var(--cor); border-color: var(--cor); color: #fff; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<main id="telaMes">
+  <section class="destaque">
+    <div class="navegar">
+      <button class="seta" id="anterior" aria-label="Mês anterior">‹</button>
+      <div>
+        <small id="mesNome"></small>
+        <h1 id="totalMes"></h1>
+        <p id="limiteTexto"></p>
+      </div>
+      <button class="seta" id="proximo" aria-label="Próximo mês">›</button>
+    </div>
+    <div class="barra"><i id="barraMes"></i></div>
+  </section>
+  <button class="principal" id="novo">+ Novo gasto</button>
+  <div id="listaGastos"></div>
+</main>
+
+<main id="telaResumo" hidden>
+  <section class="destaque">
+    <small id="resumoMes"></small>
+    <h1 id="resumoTotal"></h1>
+    <p>Gasto acumulado ao longo do mês</p>
+  </section>
+  <div class="card grafico" id="grafico"></div>
+  <h2>Por categoria</h2>
+  <div id="porCategoria"></div>
+  <div class="linha">
+    <button class="botao" id="baixar">Baixar PDF</button>
+    <button class="principal" id="compartilhar">Compartilhar PDF</button>
+  </div>
+</main>
+
+<main id="telaCategorias" hidden>
+  <section class="destaque">
+    <small>Categorias</small>
+    <h1 id="totalCategorias"></h1>
+    <p id="somaLimites"></p>
+  </section>
+  <button class="principal" id="novaCategoria">+ Nova categoria</button>
+  <div id="listaCategorias"></div>
+</main>
+
+<nav>
+  <button data-tela="telaMes" class="ativo">
+    <svg viewBox="0 0 24 24"><path d="M3 7h18v12H3zM3 11h18M7 15h3"/></svg>Gastos
+  </button>
+  <button data-tela="telaResumo">
+    <svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-9M15 6h6v6"/></svg>Resumo
+  </button>
+  <button data-tela="telaCategorias">
+    <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Categorias
+  </button>
+</nav>
+
+<dialog id="dlgGasto">
+  <form id="formGasto">
+    <h3 id="tituloGasto"></h3>
+    <label class="campo" for="gValor">Valor (R$)</label>
+    <input type="text" id="gValor" inputmode="decimal" placeholder="Ex.: 25,90" required>
+    <span class="campo">Categoria</span>
+    <div class="chips" id="gCategorias"></div>
+    <label class="campo" for="gDescricao">Descrição (opcional)</label>
+    <input type="text" id="gDescricao" maxlength="60">
+    <label class="campo" for="gData">Data</label>
+    <input type="date" id="gData" required>
+    <div class="linha">
+      <button type="button" class="botao excluir" id="gExcluir">Excluir</button>
+      <button type="button" class="botao" id="gCancelar">Cancelar</button>
+      <button class="principal">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgCategoria">
+  <form id="formCategoria">
+    <h3 id="tituloCategoria"></h3>
+    <label class="campo" for="cNome">Nome</label>
+    <input type="text" id="cNome" maxlength="30" required>
+    <label class="campo" for="cLimite">Limite mensal em R$ (opcional)</label>
+    <input type="text" id="cLimite" inputmode="decimal" placeholder="Ex.: 500">
+    <div class="linha">
+      <button type="button" class="botao excluir" id="cExcluir">Excluir</button>
+      <button type="button" class="botao" id="cCancelar">Cancelar</button>
+      <button class="principal">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function iso(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function hoje() {
+  return iso(new Date());
+}
+
+function dataDe(texto) {
+  return new Date(texto + 'T12:00:00');
+}
+
+function somarDias(texto, n) {
+  const d = dataDe(texto);
+  d.setDate(d.getDate() + n);
+  return iso(d);
+}
+
+function br(texto) {
+  return texto.split('-').reverse().join('/');
+}
+
+function decimal(texto) {
+  return Number(texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto);
+}
+
+function el(tag, props, ...filhos) {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...filhos.filter(Boolean));
+  return e;
+}
+
+function barra(fracao) {
+  return el('div', { className: 'barra' }, el('i', { className: fracao > 1 ? 'estourou' : '', style: 'width:' + Math.min(100, fracao * 100) + '%' }));
+}
+
+function graficoLinha(alvo, pontos, max, formato) {
+  const x = i => 44 + i * 264 / Math.max(pontos.length - 1, 1);
+  const y = v => 12 + (1 - v / max) * 96;
+  const raio = pontos.length > 10 ? 2.6 : 4.2;
+  const rotulos = [...new Set([0, Math.floor((pontos.length - 1) / 2), pontos.length - 1])];
+  alvo.innerHTML = '<svg viewBox="0 0 320 132">'
+    + [0, max / 2, max].map(v => '<line x1="44" x2="308" y1="' + y(v) + '" y2="' + y(v) + '" stroke="rgba(255,255,255,.09)"/>'
+      + '<text x="38" y="' + (y(v) + 3) + '" text-anchor="end" font-size="9" fill="#b5a488">' + formato(v) + '</text>').join('')
+    + '<polyline points="' + pontos.map((p, i) => x(i) + ',' + y(p.v)).join(' ') + '" fill="none" stroke="#f0b860" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    + pontos.map((p, i) => '<circle cx="' + x(i) + '" cy="' + y(p.v) + '" r="' + raio + '" fill="#f6eedf" stroke="#b9781f" stroke-width="1.6"/>').join('')
+    + rotulos.map(i => '<text x="' + x(i) + '" y="127" text-anchor="middle" font-size="9" fill="#b5a488">' + pontos[i].rotulo + '</text>').join('')
+    + '</svg>';
+}
+
+function iniciarApp(renderTudo) {
+  document.querySelectorAll('nav button').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('nav button').forEach(x => x.classList.toggle('ativo', x === b));
+      document.querySelectorAll('main').forEach(m => { m.hidden = m.id !== b.dataset.tela; });
+      renderTudo();
+      scrollTo(0, 0);
+    };
+  });
+  renderTudo();
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist();
+  }
+}
+
+function quebrar(texto, max) {
+  const linhas = [];
+  let atual = '';
+  for (let palavra of texto.split(/\s+/)) {
+    while (palavra.length > max) {
+      if (atual) {
+        linhas.push(atual);
+        atual = '';
+      }
+      linhas.push(palavra.slice(0, max));
+      palavra = palavra.slice(max);
+    }
+    if (atual && (atual + ' ' + palavra).length > max) {
+      linhas.push(atual);
+      atual = palavra;
+    } else {
+      atual = atual ? atual + ' ' + palavra : palavra;
+    }
+  }
+  if (atual) {
+    linhas.push(atual);
+  }
+  return linhas;
+}
+
+function pdfTexto(s) {
+  let r = '';
+  for (const c of s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[–—]/g, '-')) {
+    const n = c.codePointAt(0);
+    if (c === '(' || c === ')' || c === '\\') {
+      r += '\\' + c;
+    } else if (n >= 32 && n <= 126) {
+      r += c;
+    } else if (n >= 160 && n <= 255) {
+      r += '\\' + n.toString(8);
+    } else {
+      r += '?';
+    }
+  }
+  return r;
+}
+
+function gerarPdf(linhas) {
+  const paginas = [[]];
+  let y = 800;
+  for (const l of linhas) {
+    y -= l.s * 1.45;
+    if (y < 50) {
+      paginas.push([]);
+      y = 800 - l.s * 1.45;
+    }
+    if (l.t) {
+      paginas[paginas.length - 1].push(`BT /${l.b ? 'F2' : 'F1'} ${l.s} Tf 1 0 0 1 ${50 + (l.x || 0)} ${y.toFixed(1)} Tm (${pdfTexto(l.t)}) Tj ET`);
+    }
+  }
+  const objetos = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    `<< /Type /Pages /Count ${paginas.length} /Kids [${paginas.map((p, i) => (5 + i * 2) + ' 0 R').join(' ')}] >>`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'
+  ];
+  paginas.forEach((p, i) => {
+    const conteudo = p.join('\n');
+    objetos.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${6 + i * 2} 0 R >>`);
+    objetos.push(`<< /Length ${conteudo.length} >>\nstream\n${conteudo}\nendstream`);
+  });
+  let pdf = '%PDF-1.4\n';
+  const posicoes = [];
+  objetos.forEach((o, i) => {
+    posicoes.push(pdf.length);
+    pdf += `${i + 1} 0 obj\n${o}\nendobj\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`
+    + posicoes.map(p => String(p).padStart(10, '0') + ' 00000 n \n').join('')
+    + `trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new Blob([pdf], { type: 'application/pdf' });
+}
+
+
+const CHAVE = 'gastos-v1';
+const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+let dados = carregar();
+let mes = hoje().slice(0, 7);
+let editando = null;
+
+function carregar() {
+  const padrao = { categorias: ['Alimentação', 'Transporte', 'Lazer', 'Contas', 'Outros'].map((nome, i) => ({ id: 'c' + i, nome, limite: 0 })), gastos: [] };
+  try {
+    return Object.assign(padrao, JSON.parse(localStorage.getItem(CHAVE)));
+  } catch (e) {
+    return padrao;
+  }
+}
+
+function salvar() {
+  localStorage.setItem(CHAVE, JSON.stringify(dados));
+}
+
+function real(v) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function soma(lista) {
+  return lista.reduce((s, g) => s + g.valor, 0);
+}
+
+function doMes() {
+  return dados.gastos.filter(g => g.data.startsWith(mes));
+}
+
+function nomeCategoria(id) {
+  const c = dados.categorias.find(x => x.id === id);
+  return c ? c.nome : 'Sem categoria';
+}
+
+function tituloMes() {
+  return MESES[Number(mes.slice(5)) - 1] + ' de ' + mes.slice(0, 4);
+}
+
+function mudarMes(n) {
+  mes = iso(new Date(Number(mes.slice(0, 4)), Number(mes.slice(5)) - 1 + n, 1)).slice(0, 7);
+  renderTudo();
+}
+
+function renderMes() {
+  const gastos = doMes().sort((a, b) => b.data.localeCompare(a.data) || b.id.localeCompare(a.id));
+  const total = soma(gastos);
+  const limite = dados.categorias.reduce((s, c) => s + c.limite, 0);
+  $('mesNome').textContent = tituloMes();
+  $('totalMes').textContent = real(total);
+  const usado = soma(gastos.filter(g => dados.categorias.some(c => c.id === g.categoria && c.limite)));
+  $('limiteTexto').textContent = limite ? real(usado) + ' de ' + real(limite) + ' nas categorias com limite' : gastos.length + (gastos.length === 1 ? ' lançamento' : ' lançamentos');
+  $('barraMes').style.width = (limite ? Math.min(100, usado / limite * 100) : 0) + '%';
+  const filhos = [];
+  gastos.forEach((g, i) => {
+    if (!i || gastos[i - 1].data !== g.data) {
+      filhos.push(el('h2', {}, br(g.data) + ' · ' + real(soma(gastos.filter(x => x.data === g.data)))));
+    }
+    filhos.push(el('button', { className: 'card', onclick: () => abrirGasto(g) },
+      el('div', { className: 'topo' }, el('b', {}, g.descricao || nomeCategoria(g.categoria)), el('em', {}, real(g.valor))),
+      el('span', {}, nomeCategoria(g.categoria))));
+  });
+  $('listaGastos').replaceChildren(...filhos);
+  if (!gastos.length) {
+    $('listaGastos').append(el('p', { className: 'vazio' }, 'Nenhum gasto lançado neste mês.'));
+  }
+}
+
+function renderResumo() {
+  const gastos = doMes();
+  const total = soma(gastos);
+  const limite = dados.categorias.reduce((s, c) => s + c.limite, 0);
+  const ultimo = mes === hoje().slice(0, 7) ? new Date().getDate() : new Date(Number(mes.slice(0, 4)), Number(mes.slice(5)), 0).getDate();
+  const pontos = Array.from({ length: ultimo }, (v, i) => {
+    const data = mes + '-' + String(i + 1).padStart(2, '0');
+    return { rotulo: br(data).slice(0, 5), v: soma(gastos.filter(g => g.data <= data)) };
+  });
+  $('resumoMes').textContent = tituloMes();
+  $('resumoTotal').textContent = real(total);
+  graficoLinha($('grafico'), pontos, Math.max(limite, total) || 1, v => 'R$' + Math.round(v));
+  const usadas = [...dados.categorias.map(c => c.id), ...new Set(gastos.map(g => g.categoria).filter(id => !dados.categorias.some(c => c.id === id)))];
+  $('porCategoria').replaceChildren(...usadas.map(id => {
+    const c = dados.categorias.find(x => x.id === id) || { limite: 0 };
+    const gasto = soma(gastos.filter(g => g.categoria === id));
+    return el('div', { className: 'card' },
+      el('div', { className: 'topo' }, el('b', {}, nomeCategoria(id)), el('em', {}, real(gasto))),
+      el('span', {}, c.limite ? (gasto > c.limite ? real(gasto - c.limite) + ' acima do limite de ' + real(c.limite) : 'Sobram ' + real(c.limite - gasto) + ' de ' + real(c.limite)) : 'Sem limite definido'),
+      c.limite ? barra(gasto / c.limite) : null);
+  }));
+}
+
+function renderCategorias() {
+  $('totalCategorias').textContent = dados.categorias.length + (dados.categorias.length === 1 ? ' categoria' : ' categorias');
+  $('somaLimites').textContent = 'Limite mensal total: ' + real(dados.categorias.reduce((s, c) => s + c.limite, 0));
+  $('listaCategorias').replaceChildren(...dados.categorias.map(c =>
+    el('button', { className: 'card', onclick: () => abrirCategoria(c) },
+      el('div', { className: 'topo' }, el('b', {}, c.nome), el('span', { className: 'lado' }, 'Editar')),
+      el('span', {}, c.limite ? 'Limite: ' + real(c.limite) : 'Sem limite definido'))));
+}
+
+function renderTudo() {
+  renderMes();
+  renderResumo();
+  renderCategorias();
+}
+
+function abrirGasto(g) {
+  if (!dados.categorias.length) {
+    alert('Cadastre uma categoria primeiro.');
+    return;
+  }
+  editando = g || null;
+  $('tituloGasto').textContent = g ? 'Editar gasto' : 'Novo gasto';
+  $('gValor').value = g ? g.valor.toFixed(2).replace('.', ',') : '';
+  $('gDescricao').value = g ? g.descricao : '';
+  $('gData').value = g ? g.data : (mes === hoje().slice(0, 7) ? hoje() : mes + '-01');
+  $('gCategorias').replaceChildren(...dados.categorias.map(c => el('label', {}, el('input', { type: 'radio', name: 'categoria', value: c.id, required: true }), el('span', {}, c.nome))));
+  $('formGasto').categoria.value = g ? g.categoria : '';
+  $('gExcluir').hidden = !g;
+  $('dlgGasto').showModal();
+}
+
+function abrirCategoria(c) {
+  editando = c || null;
+  $('tituloCategoria').textContent = c ? 'Editar categoria' : 'Nova categoria';
+  $('cNome').value = c ? c.nome : '';
+  $('cLimite').value = c && c.limite ? String(c.limite).replace('.', ',') : '';
+  $('cExcluir').hidden = !c;
+  $('dlgCategoria').showModal();
+}
+
+function linhasRelatorio() {
+  const gastos = doMes().sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id));
+  const linhas = [
+    { t: 'Controle de gastos', s: 18, b: true },
+    { t: tituloMes() + ' - Total: ' + real(soma(gastos)), s: 11 },
+    { t: '', s: 8 },
+    { t: 'Por categoria', s: 13, b: true }
+  ];
+  const item = texto => quebrar(texto, 88).forEach((t, i) => linhas.push({ t, s: 10, x: i ? 22 : 10 }));
+  [...new Set(gastos.map(g => g.categoria))].forEach(id => {
+    const c = dados.categorias.find(x => x.id === id);
+    item(nomeCategoria(id) + ': ' + real(soma(gastos.filter(g => g.categoria === id))) + (c && c.limite ? ' (limite ' + real(c.limite) + ')' : ''));
+  });
+  linhas.push({ t: '', s: 8 }, { t: 'Lançamentos', s: 13, b: true });
+  gastos.forEach(g => item(br(g.data) + ' - ' + nomeCategoria(g.categoria) + (g.descricao ? ' - ' + g.descricao : '') + ' - ' + real(g.valor)));
+  if (!gastos.length) {
+    item('Sem lançamentos no mês.');
+  }
+  return linhas;
+}
+
+async function exportar(compartilhar) {
+  const arquivo = new File([gerarPdf(linhasRelatorio())], 'gastos_' + mes + '.pdf', { type: 'application/pdf' });
+  if (compartilhar) {
+    try {
+      await navigator.share({ files: [arquivo], title: arquivo.name });
+    } catch (e) {}
+    return;
+  }
+  el('a', { href: URL.createObjectURL(arquivo), download: arquivo.name }).click();
+}
+
+$('anterior').onclick = () => mudarMes(-1);
+$('proximo').onclick = () => mudarMes(1);
+$('novo').onclick = () => abrirGasto();
+$('novaCategoria').onclick = () => abrirCategoria();
+$('gCancelar').onclick = () => $('dlgGasto').close();
+$('cCancelar').onclick = () => $('dlgCategoria').close();
+$('baixar').onclick = () => exportar(false);
+$('compartilhar').onclick = () => exportar(true);
+$('compartilhar').hidden = !(navigator.canShare && navigator.canShare({ files: [new File([''], 'a.pdf', { type: 'application/pdf' })] }));
+
+$('formGasto').onsubmit = e => {
+  e.preventDefault();
+  const valor = decimal($('gValor').value);
+  if (!(valor > 0)) {
+    alert('Informe o valor, por exemplo 25,90.');
+    return;
+  }
+  const registro = { valor, categoria: e.target.categoria.value, descricao: $('gDescricao').value.trim(), data: $('gData').value };
+  if (editando) {
+    Object.assign(editando, registro);
+  } else {
+    dados.gastos.push({ id: Date.now().toString(36), ...registro });
+  }
+  mes = registro.data.slice(0, 7);
+  salvar();
+  $('dlgGasto').close();
+  renderTudo();
+};
+
+$('gExcluir').onclick = () => {
+  if (!confirm('Excluir este gasto?')) {
+    return;
+  }
+  dados.gastos = dados.gastos.filter(g => g.id !== editando.id);
+  salvar();
+  $('dlgGasto').close();
+  renderTudo();
+};
+
+$('formCategoria').onsubmit = e => {
+  e.preventDefault();
+  const limite = $('cLimite').value.trim() ? decimal($('cLimite').value) : 0;
+  if (!(limite >= 0)) {
+    alert('Informe o limite em reais, por exemplo 500.');
+    return;
+  }
+  if (editando) {
+    editando.nome = $('cNome').value.trim();
+    editando.limite = limite;
+  } else {
+    dados.categorias.push({ id: Date.now().toString(36), nome: $('cNome').value.trim(), limite });
+  }
+  salvar();
+  $('dlgCategoria').close();
+  renderTudo();
+};
+
+$('cExcluir').onclick = () => {
+  if (!confirm('Excluir a categoria "' + editando.nome + '"? Os gastos dela ficam como "Sem categoria".')) {
+    return;
+  }
+  dados.categorias = dados.categorias.filter(c => c.id !== editando.id);
+  salvar();
+  $('dlgCategoria').close();
+  renderTudo();
+};
+
+iniciarApp(renderTudo);
+</script>
+</body>
+</html>
